@@ -36,11 +36,11 @@ class TransactionController extends Controller
         // Filter by status
         if ($request->filled('status')) {
             if ($request->status === 'borrowed') {
-                $query->whereNull('returned_date'); // Back to returned_date
+                $query->whereNull('returned_date');
             } elseif ($request->status === 'returned') {
-                $query->whereNotNull('returned_date'); // Back to returned_date
+                $query->whereNotNull('returned_date');
             } elseif ($request->status === 'overdue') {
-                $query->overdue(); // Use the scope from your model
+                $query->overdue();
             }
         }
 
@@ -61,7 +61,6 @@ class TransactionController extends Controller
 
         $transactions = $query->paginate(15);
 
-        // Calculate stats using correct field names
         $stats = [
             'total' => Borrowing::count(),
             'active' => Borrowing::whereNull('returned_date')->count(),
@@ -80,7 +79,8 @@ class TransactionController extends Controller
         if ($redirect = $this->checkAdmin()) return $redirect;
 
         $users = User::where('role', 'user')->orderBy('name')->get();
-        $books = Book::where('available_copies', '>', 0)->orderBy('title')->get();
+        // FIXED: Use available_quantity instead of available_copies
+        $books = Book::where('available_quantity', '>', 0)->orderBy('title')->get();
 
         return view('admin.transactions.create', compact('users', 'books'));
     }
@@ -99,16 +99,16 @@ class TransactionController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        // Check if book is available
+        // FIXED: Use available_quantity instead of available_copies
         $book = Book::findOrFail($request->book_id);
-        if ($book->available_copies <= 0) {
+        if ($book->available_quantity <= 0) {
             return back()->withInput()->with('error', 'This book is not available for borrowing.');
         }
 
         // Check if user already has this book
         $existingBorrow = Borrowing::where('user_id', $request->user_id)
             ->where('book_id', $request->book_id)
-            ->whereNull('returned_date') // Back to returned_date
+            ->whereNull('returned_date')
             ->first();
 
         if ($existingBorrow) {
@@ -116,19 +116,18 @@ class TransactionController extends Controller
         }
 
         try {
-            // Create borrowing record using correct field names
             Borrowing::create([
                 'user_id' => $request->user_id,
                 'book_id' => $request->book_id,
-                'borrowed_date' => now(), // Back to borrowed_date
+                'borrowed_date' => now(),
                 'due_date' => $request->due_date,
                 'status' => 'borrowed',
                 'notes' => $request->notes,
                 'fine_amount' => 0.00,
             ]);
 
-            // Update book availability
-            $book->decrement('available_copies');
+            // FIXED: Decrement available_quantity
+            $book->decrement('available_quantity');
 
             return redirect()->route('admin.transactions.index')
                 ->with('success', 'Book borrowed successfully! Transaction created.');
@@ -155,26 +154,24 @@ class TransactionController extends Controller
     {
         if ($redirect = $this->checkAdmin()) return $redirect;
 
-        if ($borrowing->returned_date) { // Back to returned_date
+        if ($borrowing->returned_date) {
             return back()->with('error', 'Book is already returned.');
         }
 
         try {
-            // Calculate fine if overdue
             $fine = 0;
             if ($borrowing->isOverdue()) {
                 $fine = $borrowing->calculateFine(1.00); // $1 per day fine
             }
 
-            // Update borrowing record
             $borrowing->update([
-                'returned_date' => now(), // Back to returned_date
+                'returned_date' => now(),
                 'status' => 'returned',
                 'fine_amount' => $fine,
             ]);
 
-            // Update book availability
-            $borrowing->book->increment('available_copies');
+            // FIXED: Increment available_quantity
+            $borrowing->book->increment('available_quantity');
 
             $message = 'Book returned successfully!';
             if ($fine > 0) {
@@ -198,7 +195,7 @@ class TransactionController extends Controller
             'new_due_date' => 'required|date|after:today',
         ]);
 
-        if ($borrowing->returned_date) { // Back to returned_date
+        if ($borrowing->returned_date) {
             return back()->with('error', 'Cannot renew returned book.');
         }
 
@@ -221,7 +218,7 @@ class TransactionController extends Controller
         if ($redirect = $this->checkAdmin()) return $redirect;
 
         $overdueTransactions = Borrowing::with(['user', 'book'])
-            ->overdue() // Use the scope from your model
+            ->overdue()
             ->orderBy('due_date')
             ->paginate(15);
 

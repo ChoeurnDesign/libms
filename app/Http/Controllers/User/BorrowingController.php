@@ -124,4 +124,26 @@ class BorrowingController extends Controller
             'message' => 'Reading time extended! New return date: ' . $borrowing->due_date
         ]);
     }
+
+    public function returnBook($borrowingId)
+{
+    $borrowing = Borrowing::findOrFail($borrowingId);
+
+    if ($borrowing->user_id !== Auth::id()) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized.']);
+    }
+
+    if ($borrowing->status !== 'borrowed') {
+        return response()->json(['success' => false, 'message' => 'Book is already returned.']);
+    }
+
+    $borrowing->status = 'returned';
+    // $borrowing->returned_at = now(); // REMOVE OR COMMENT THIS LINE
+    $borrowing->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Book returned successfully!'
+    ]);
+}
 }

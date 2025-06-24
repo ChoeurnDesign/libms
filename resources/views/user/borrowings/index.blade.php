@@ -10,7 +10,6 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    {{-- Changed route for "Back" button to use route helper --}}
                     <a href="{{ route('user.dashboard') }}" class="btn btn-outline-secondary mb-3">
                         <i class="fas fa-arrow-left"></i> Back
                     </a>
@@ -19,7 +18,6 @@
                         Currently Reading
                     </h3>
                     <div class="card-tools">
-                        {{-- This route is already correct --}}
                         <a href="{{ route('user.borrowings.history') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-history"></i> Reading History
                         </a>
@@ -84,8 +82,8 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    @if($borrowing->book && $borrowing->book->cover_image)
-                                                        <img src="{{ asset($borrowing->book->cover_url) }}" {{-- Changed to use cover_url appends --}}
+                                                    @if(!empty($borrowing->book_cover))
+                                                        <img src="{{ asset($borrowing->book_cover) }}"
                                                              class="me-2"
                                                              style="width: 40px; height: 50px; object-fit: cover;"
                                                              alt="{{ $borrowing->book_title }}">
@@ -101,13 +99,13 @@
                                                 </div>
                                             </td>
                                             <td>{{ $borrowing->book_author ?? 'Unknown Author' }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_date)->format('M d, Y') ?? 'N/A' }}</td> {{-- Formatted date --}}
+                                            <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_date)->format('M d, Y') ?? 'N/A' }}</td>
                                             <td>
                                                 @if(isset($borrowing->due_date))
-                                                    {{ \Carbon\Carbon::parse($borrowing->due_date)->format('M d, Y') }} {{-- Formatted date --}}
-                                                    @if(\Carbon\Carbon::parse($borrowing->due_date)->isPast()) {{-- Using Carbon methods --}}
+                                                    {{ \Carbon\Carbon::parse($borrowing->due_date)->format('M d, Y') }}
+                                                    @if(\Carbon\Carbon::parse($borrowing->due_date)->isPast())
                                                         <span class="badge bg-warning text-dark">Overdue</span>
-                                                    @elseif(\Carbon\Carbon::parse($borrowing->due_date)->diffInDays(now()) <= 3) {{-- Using Carbon methods --}}
+                                                    @elseif(\Carbon\Carbon::parse($borrowing->due_date)->diffInDays(now()) <= 3)
                                                         <span class="badge bg-info text-dark">Due Soon</span>
                                                     @endif
                                                 @else
@@ -147,7 +145,6 @@
                                                             title="Extend Reading Time">
                                                         <i class="fas fa-plus"></i>
                                                     </button>
-                                                    {{-- Return Button --}}
                                                     <button class="btn btn-sm btn-outline-danger"
                                                             onclick="returnBook({{ $borrowing->id }})"
                                                             title="Return Book">
@@ -199,7 +196,6 @@
                                     <i class="fas fa-search"></i>
                                     Discover Books
                                 </a>
-                                {{-- Changed route to user.categories.index --}}
                                 <a href="{{ route('user.categories.index') }}" class="btn btn-outline-secondary btn-lg">
                                     <i class="fas fa-list"></i>
                                     Browse Categories
@@ -216,7 +212,7 @@
 <script>
 function extendReading(borrowingId) {
     if (confirm('Would you like to extend your reading time by 2 weeks?')) {
-        fetch(`{{ url('/user/borrowings') }}/${borrowingId}/renew`, { {{-- Using url() helper for direct path, or route() if available for API --}}
+        fetch(`{{ url('/user/borrowings') }}/${borrowingId}/renew`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -240,11 +236,10 @@ function extendReading(borrowingId) {
     }
 }
 
-// NEW: returnBook function
 function returnBook(borrowingId) {
     if (confirm('Are you sure you want to return this book?')) {
-        fetch(`{{ url('/user/borrowings') }}/${borrowingId}/return`, { {{-- Using url() helper for direct path --}}
-            method: 'POST', // Or 'PUT', depending on your preference for RESTful actions
+        fetch(`{{ url('/user/borrowings') }}/${borrowingId}/return`, {
+            method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json',
@@ -255,7 +250,7 @@ function returnBook(borrowingId) {
         .then(data => {
             if (data.success) {
                 alert('Book returned successfully! Thank you for reading. 🎉');
-                window.location.reload(); // Reload the page to update the list
+                window.location.reload();
             } else {
                 alert(data.message || 'Unable to return book.');
             }

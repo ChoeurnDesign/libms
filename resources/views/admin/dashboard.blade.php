@@ -169,22 +169,22 @@
                 <h6 class="mb-0 fw-bold">Monthly Transaction Report</h6>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
-                        Select Year: 2025
+                        Select Year: {{ $year }}
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">2025</a></li>
-                        <li><a class="dropdown-item" href="#">2024</a></li>
+                        @for($y = now()->year; $y >= now()->year - 5; $y--)
+                            <li>
+                                <a class="dropdown-item {{ $y == $year ? 'active' : '' }}"
+                                    href="{{ route('admin.dashboard', ['year' => $y]) }}">
+                                    {{ $y }}
+                                </a>
+                            </li>
+                        @endfor
                     </ul>
                 </div>
             </div>
             <div class="card-body p-4">
-                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="height: 300px;">
-                    <div class="text-center">
-                        <i class="fas fa-chart-bar display-1 text-muted mb-3"></i>
-                        <h5 class="text-muted">Transaction Chart</h5>
-                        <p class="text-muted mb-0">Chart will be displayed here</p>
-                    </div>
-                </div>
+                <canvas id="transactionChart" height="100"></canvas>
                 <div class="mt-4 d-flex justify-content-center gap-4">
                     <div class="d-flex align-items-center">
                         <span class="badge bg-success me-2">■</span>
@@ -231,3 +231,43 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var ctx = document.getElementById('transactionChart').getContext('2d');
+    var transactionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: @json($months),
+            datasets: [
+                {
+                    label: 'Borrowed',
+                    data: @json($borrowed),
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Returned',
+                    data: @json($returned),
+                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+});
+</script>
+@endpush
