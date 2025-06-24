@@ -1,0 +1,41 @@
+/* Replace your existing pagination fix with this more specific version */
+
+/* Emergency fix for oversized pagination icons - Higher specificity */
+.pagination .page-item .page-link * {
+    max-width: 16px !important;
+    max-height: 16px !important;
+}
+
+.pagination .page-item .page-link svg,
+.pagination .page-item .page-link img,
+.pagination .page-item .page-link i,
+.pagination .page-item .page-link::before,
+.pagination .page-item .page-link::after {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+}
+
+/* Clean up pagination appearance with higher specificity */
+.pagination .page-item .page-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    font-size: 14px !important;
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* Fix for any arrow characters or symbols */
+.pagination .page-item .page-link {
+    line-height: 1 !important;
+}
+
+/* Specific fix for Laravel's default pagination arrows */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    font-size: 14px !important;
+}
