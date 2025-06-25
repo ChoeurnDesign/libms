@@ -140,7 +140,7 @@
             <div class="row text-center">
                 <div class="col-12">
                     <p class="mb-2">
-                        <i class="fas fa-heart text-danger me-2"></i>
+                        <i class="fas fa-book-open text-warning me-2"></i>
                         &copy; {{ date('Y') }} Library Management System
                     </p>
                 </div>
